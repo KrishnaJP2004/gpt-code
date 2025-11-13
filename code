@@ -1,0 +1,26 @@
+import pandas as pd
+import gradio as gr
+import ollama
+
+def write_blog(message, history):
+    title = message.strip()
+    if not title:
+        return "Please provide a blog post title to begin."
+
+    BOT_PROMPT = """
+    You are an expert blog writer.
+    Given a blog title, write a well-structured, clear, and engaging blog post with:
+    1) A catchy title and short introduction
+    2) Main sections with headings, bullet points if needed, and a conclusion
+    """
+
+    messages = [
+        {"role": "system", "content": BOT_PROMPT},
+        {"role": "user", "content": f'Blog Post Title: "{title}"\nWrite the full post now.'}
+    ]
+
+    response = ollama.chat(model="llama2", messages=messages)
+    return response["message"]["content"]
+
+# Minimal UI
+gr.ChatInterface(fn=write_blog).launch()
