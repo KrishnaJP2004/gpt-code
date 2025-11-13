@@ -24,3 +24,91 @@ def write_blog(message, history):
 
 # Minimal UI
 gr.ChatInterface(fn=write_blog).launch()
+
+
+
+
+
+
+
+
+
+
+
+
+
+import pandas as pd
+import gradio as gr
+import ollama
+
+with open("movies.csv","r",encoding='utf-8',errors='ignore') as f:
+    movie_data = f.read()
+
+prompt = f"""
+    You are a movie recommendation Assistant
+    Find matching or similar books using title and genre
+    Generate AI explanation for each recommendation
+    Give responses from the dataset
+
+    dataset:
+    {movie_data}
+    """
+def recommend(message,history):
+    messages = [{"role":"system","content": prompt },
+               {"role":"user","content":message}]
+
+    for user_msg,bot_msg in history:
+        messages.append({"role":"system","content": bot_msg })
+        messages.append({"role":"user","content": user_msg })
+               
+        
+    response = ollama.chat(model='qwen2.5:0.5b',messages = messages)
+    return response['message']['content']
+
+print("Welcome to Book Recommendation System....!")
+gr.ChatInterface(fn=recommend,title="Movie Recommendation").launch()
+
+
+
+
+
+
+
+
+import pandas as pd
+import gradio as gr
+import PyPDF2
+import ollama
+
+def extract_text_from_pdf(file):
+    try:
+        reader = PyPDF2.PdfReader(file.name)
+        text=""
+        for page in reader.pages:
+            text+=page.extract_text() or "" 
+        return text.strip()
+
+    except Exception as e:
+        return f"The error is {e}"
+
+def resume_rev(file):
+    resume = extract_text_from_pdf(file)
+    prompt = f"""
+
+    You are an AI Resume Evaluator.
+    Evaluate the following resume text based on strengths, weaknesses, and recommendations.
+
+Resume:
+{resume}
+
+Give the output in a clear 3-section format:
+1. Strengths
+2. Weaknesses
+3. Recommendations
+    """
+
+    response = ollama.chat(model="qwen2.5:0.5b",messages=[{"role":"system","content":prompt}])
+    return response['message']['content']
+
+print("Welcome to resume reviewer")
+gr.Interface(fn=resume_rev,inputs=gr.File(label="Upload your pdf here"),outputs=gr.Textbox(lines=15),title="Resume Reviewer").launch()
